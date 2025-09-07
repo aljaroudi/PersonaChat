@@ -48,16 +48,6 @@
 			path = PersonaChat;
 			sourceTree = "<group>";
 		};
-		15694F302E621F2100AF4BA3 /* PersonaChatTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PersonaChatTests;
-			sourceTree = "<group>";
-		};
-		15694F3A2E621F2100AF4BA3 /* PersonaChatUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PersonaChatUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,8 +79,6 @@
 			isa = PBXGroup;
 			children = (
 				15694F1E2E621F2000AF4BA3 /* PersonaChat */,
-				15694F302E621F2100AF4BA3 /* PersonaChatTests */,
-				15694F3A2E621F2100AF4BA3 /* PersonaChatUITests */,
 				15694F1D2E621F2000AF4BA3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -143,9 +131,6 @@
 			dependencies = (
 				15694F2F2E621F2100AF4BA3 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				15694F302E621F2100AF4BA3 /* PersonaChatTests */,
-			);
 			name = PersonaChatTests;
 			packageProductDependencies = (
 			);
@@ -165,9 +150,6 @@
 			);
 			dependencies = (
 				15694F392E621F2100AF4BA3 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				15694F3A2E621F2100AF4BA3 /* PersonaChatUITests */,
 			);
 			name = PersonaChatUITests;
 			packageProductDependencies = (
@@ -289,6 +271,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5VGKP2QV6H;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -332,6 +315,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5VGKP2QV6H;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;

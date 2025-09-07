@@ -11,9 +11,7 @@ import SwiftData
 @main
 struct PersonaChatApp: App {
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
+        let schema = Schema(DataSchema.models)
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
@@ -25,7 +23,9 @@ struct PersonaChatApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                ChatView()
+            }
         }
         .modelContainer(sharedModelContainer)
     }
