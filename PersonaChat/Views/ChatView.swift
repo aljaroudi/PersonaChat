@@ -6,37 +6,45 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ChatView: View {
 
-    let chat: Chat
+    @Environment(\.modelContext)
+    private var modelContext
+
+    @Query(sort: \Message.date)
+    private var messages: [Message]
 
     @State
     private var text = ""
 
+    @FocusState
+    private var isTextFieldFocused: Bool
+
+    @AppStorage("selectedPersonaID")
+    private var selectedPersonaID = PERSONAS.first?.id ?? "luna"
+
+    private var selectedPersona: Persona {
+        PERSONAS.first { $0.id == selectedPersonaID } ?? PERSONAS[0]
+    }
+
     var body: some View {
         ZStack {
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(chat.messages.sorted { $0.date < $1.date }) { message in
-
-                        if message.role == .user {
-                            HStack {
-                                Spacer()
-                                Text(message.text)
-                                    .padding()
-                                    .background(.ultraThinMaterial)
-                                    .clipShape(.rect(cornerRadius: 20))
-                            }
-                            .padding()
-                        } else {
-                            Text(message.text)
-                                .padding(.horizontal)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(messages) { message in
+                            MessageRow(message)
+                                .tag(message.id)
                         }
                     }
+                    .padding(.bottom, 80)
                 }
-                .padding(.bottom, 80)
+                .onAppear {
+                    scrollToBottom(proxy: proxy)
+                }
             }
             VStack {
                 Spacer()
@@ -45,12 +53,8 @@ struct ChatView: View {
                     HStack {
                         TextField("Type a message...", text: $text)
                             .onSubmit(addMessage)
-
-                        Button("Send", systemImage: "arrow.up.circle.fill") {
-                            addMessage()
-                        }
-                        .imageScale(.large)
-                        .labelStyle(.iconOnly)
+                            .focused($isTextFieldFocused)
+                            .submitLabel(.send)
                     }
                     .padding()
                     .glassEffect(.regular.interactive())
@@ -59,6 +63,8 @@ struct ChatView: View {
                     HStack {
                         TextField("Type a message...", text: $text)
                             .onSubmit(addMessage)
+                            .focused($isTextFieldFocused)
+                            .submitLabel(.send)
                     }
                     .padding()
                     .background(.ultraThinMaterial)
@@ -67,54 +73,75 @@ struct ChatView: View {
                 }
             }
         }
+        .onChange(of: selectedPersonaID) { clearChat() }
+        .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
+        .toolbarTitleMenu {
+            Picker("Persona", selection: $selectedPersonaID) {
+                ForEach(PERSONAS, id: \.id) { persona in
+                    Text("\(persona.emoji)  \(persona.name)").tag(persona.id)
+                }
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Clear Chat", systemImage: "square.and.pencil", action: clearChat)
+            }
+        }
+        .toolbarTitleDisplayMode(.inline)
     }
 
+    @MainActor
     private func addMessage() {
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
 
-        let message = Message(
-            in: chat,
-            role: .user,
-            text: text
-        )
-        
-        chat.messages.append(message)
+        let message = Message(role: .user,text: text)
+        modelContext.insert(message)
+        try? modelContext.save()
 
+        guard #available(iOS 26.0, *) else { return }
 
+        let aiMessage = Message(role: .bot, text: "...")
 
-//        AI
-        if #available(iOS 26.0, *) {
+        modelContext.insert(aiMessage)
 
-            let aiMessage = Message(
-                in: chat,
-                role: .bot,
-                text: "Loading..."
-            )
+        let stream = stream(messages, prompt: selectedPersona.fullPrompt)
 
-            chat.messages.append(aiMessage)
-
-            let stream = stream(chat.messages)
-
-            Task {
-                for await msg in stream {
-                    aiMessage.text = msg
-                    print("RESPONSE: \(msg)")
-                }
+        Task {
+            for await msg in stream {
+                aiMessage.text = msg
+                try? modelContext.save()
             }
-        } else {
-            // Fallback on earlier versions
         }
 
+        text = ""
+        isTextFieldFocused = true
+
+    }
+
+    private func scrollToBottom(proxy: ScrollViewProxy) {
+        guard let last = messages.last else { return }
+        DispatchQueue.main.async {
+            withAnimation {
+                proxy.scrollTo(last.id, anchor: .bottom)
+            }
+        }
+    }
+
+    @MainActor
+    private func clearChat() {
+        try? modelContext.delete(model: Message.self)
+        modelContext.insert(Message(
+            role: .bot,
+            text: selectedPersona.greeting
+        ))
+        try? modelContext.save()
     }
 }
 
 #Preview {
-    let chat = Chat("Test")
-    let msg: Message = .init(in: chat, role: .user, text: "Hi")
-    chat.messages.append(msg)
-    let reply: Message = .init(in: chat, role: .bot, text: "Hey!")
-    chat.messages.append(reply)
-    return ChatView(chat: chat)
+    NavigationStack {
+        ChatView()
+    }
 }
 
