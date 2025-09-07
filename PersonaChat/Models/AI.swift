@@ -10,10 +10,16 @@ import FoundationModels
 
 @available(iOS 26.0, *)
 func stream(
-    _ messages: [Message]
+    _ messages: [Message],
+    prompt: String
 ) -> AsyncStream<String> {
 
-    AsyncStream { cont in
+    let transcript = Transcript(
+        entries: messages.asTranscript(with: prompt)
+    )
+
+
+    return AsyncStream { cont in
 
         let task = Task {
             do {
@@ -21,10 +27,9 @@ func stream(
                     "\($0.role.rawValue): \($0.text)\n\n"
                 }.joined()
 
-                let model = SystemLanguageModel.default
-                let session = LanguageModelSession(model: model)
+                let session = LanguageModelSession(transcript: transcript)
 
-                let stream = session.streamResponse(to: history)
+                let stream = session.streamResponse(to: history, options: .init(temperature: 0.7))
 
                 for try await token in stream {
                     cont.yield(token.content)
@@ -39,5 +44,30 @@ func stream(
 
         cont.onTermination = { _ in task.cancel() }
 
+    }
+}
+
+
+fileprivate extension Array where Element == Message {
+    func asTranscript(with instructions: String) -> Transcript {
+        var entries: [Transcript.Entry] = [
+            instructions.asInstructions
+        ]
+
+        for message in self {
+            let seg: Transcript.Segment = .text(.init(content: message.text))
+            switch message.role {
+            case .user: entries.append(.prompt(.init(segments: [seg])))
+            case .bot: entries.append(.response(.init(assetIDs: [], segments: [seg])))
+            }
+        }
+
+        return Transcript(entries: entries)
+    }
+}
+
+fileprivate extension String {
+    var asInstructions: Transcript.Entry {
+        .instructions(Transcript.Instructions(segments: [.text(.init(content: self))], toolDefinitions: []))
     }
 }

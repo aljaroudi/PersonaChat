@@ -23,7 +23,9 @@ struct PersonaChatApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ChatsView()
+            NavigationStack {
+                ChatView()
+            }
         }
         .modelContainer(sharedModelContainer)
     }
