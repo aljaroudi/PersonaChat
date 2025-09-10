@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import LLM
 
 struct ChatView: View {
 
@@ -28,6 +29,12 @@ struct ChatView: View {
     private var selectedPersona: Persona {
         PERSONAS.first { $0.id == selectedPersonaID } ?? PERSONAS[0]
     }
+
+    @State
+    private var bot: Bot?
+
+    @State
+    private var showError = false
 
     var body: some View {
         ZStack {
@@ -55,6 +62,14 @@ struct ChatView: View {
                             .onSubmit(addMessage)
                             .focused($isTextFieldFocused)
                             .submitLabel(.send)
+                            .textFieldStyle(.plain)
+                            .disabled(bot?.isGenerating ?? false)
+
+                        if bot?.isGenerating == true {
+                            Button("Stop", systemImage: "square.fill") {
+                                bot?.stop()
+                            }.labelStyle(.iconOnly)
+                        }
                     }
                     .padding()
                     .glassEffect(.regular.interactive())
@@ -65,6 +80,14 @@ struct ChatView: View {
                             .onSubmit(addMessage)
                             .focused($isTextFieldFocused)
                             .submitLabel(.send)
+                            .textFieldStyle(.plain)
+                            .disabled(bot?.isGenerating ?? false)
+
+                        if bot?.isGenerating == true {
+                            Button("Stop", systemImage: "square.fill") {
+                                bot?.stop()
+                            }.labelStyle(.iconOnly)
+                        }
                     }
                     .padding()
                     .background(.ultraThinMaterial)
@@ -73,7 +96,17 @@ struct ChatView: View {
                 }
             }
         }
-        .onChange(of: selectedPersonaID) { clearChat() }
+        .onChange(of: selectedPersonaID) {
+            clearChat()
+            bot?.set(persona: selectedPersona)
+        }
+        .task {
+            // lazy init once we have a ModelContext in scope
+            if bot == nil {
+                bot = try! .init(context: modelContext)
+            }
+        }
+        .alert("Error responding", isPresented: $showError) {}
         .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
         .toolbarTitleMenu {
             Picker("Persona", selection: $selectedPersonaID) {
@@ -83,40 +116,28 @@ struct ChatView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem {
                 Button("Clear Chat", systemImage: "square.and.pencil", action: clearChat)
             }
         }
         .toolbarTitleDisplayMode(.inline)
     }
 
-    @MainActor
     private func addMessage() {
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
 
-        let message = Message(role: .user,text: text)
-        modelContext.insert(message)
-        try? modelContext.save()
-
-        guard #available(iOS 26.0, *) else { return }
-
-        let aiMessage = Message(role: .bot, text: "...")
-
-        modelContext.insert(aiMessage)
-
-        let stream = stream(messages, prompt: selectedPersona.fullPrompt)
-
-        Task {
-            for await msg in stream {
-                aiMessage.text = msg
-                try? modelContext.save()
+        bot?.ask(
+            text,
+            messages,
+            onComplete: { _ in
+                isTextFieldFocused = true
+            },
+            onError: { _ in
+                showError = true
             }
-        }
-
+        )
         text = ""
-        isTextFieldFocused = true
-
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy) {
@@ -130,6 +151,7 @@ struct ChatView: View {
 
     @MainActor
     private func clearChat() {
+        bot?.stop()
         try? modelContext.delete(model: Message.self)
         modelContext.insert(Message(
             role: .bot,
