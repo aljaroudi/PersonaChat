@@ -43,9 +43,10 @@ final class Bot {
     }
 
     func ask(
-        _ prompt: String,
-        _ messages: [Message]
-    ) async throws(BotError) -> Message {
+        prompt: String,
+        response: Message,
+        history messages: [Message]
+    ) async throws(BotError) {
         guard !isGenerating, !prompt.isEmpty else { 
             throw BotError.noOutput 
         }
@@ -56,16 +57,6 @@ final class Bot {
         bot.history = messages.map { msg in
             (msg.role == .user ? .user : .bot, msg.text)
         }
-
-        let userMessage = Message(role: .user, text: prompt)
-        let assistant = Message(role: .bot, text: "")
-        
-        // Insert messages
-        context.insert(userMessage)
-        context.insert(assistant)
-
-        print("History limit: \(bot.historyLimit)")
-
 
         do {
             try context.save()
@@ -79,10 +70,10 @@ final class Bot {
         await bot.respond(to: prompt) { [self] stream in
             for await chunk in stream {
                 sawAnyChunk = true
-                assistant.text += chunk
+                response.text += chunk
                 try? context.save()
             }
-            return assistant.text
+            return response.text
         }
 
         if !sawAnyChunk {
@@ -91,7 +82,6 @@ final class Bot {
 
         do {
             try context.save()
-            return assistant
         } catch {
             throw BotError.persistanceFailed
         }

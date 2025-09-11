@@ -52,6 +52,9 @@ struct ChatView: View {
                 .onAppear {
                     scrollToBottom(proxy: proxy)
                 }
+                .onChange(of: messages) {
+                    scrollToBottom(proxy: proxy)
+                }
             }
             VStack {
                 Spacer()
@@ -96,6 +99,17 @@ struct ChatView: View {
                 }
             }
         }
+        .background(
+            ZStack {
+                Image(selectedPersona.backgroundImage)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                Rectangle()
+                    .fill(.ultraThickMaterial.opacity(0.95))
+                    .ignoresSafeArea()
+            }
+        )
         .onChange(of: selectedPersonaID) {
             clearChat()
             bot?.set(persona: selectedPersona)
@@ -108,36 +122,72 @@ struct ChatView: View {
         }
         .alert("Error responding", isPresented: $showError) {}
         .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
+//        .navigationBarTitleDisplayMode(.inline)
         .toolbarTitleMenu {
             Picker("Persona", selection: $selectedPersonaID) {
                 ForEach(PERSONAS, id: \.id) { persona in
-                    Text("\(persona.emoji)  \(persona.name)").tag(persona.id)
+                    Text("\(persona.emoji)  \(persona.name)")
+                        .font(persona.font)
+                        .tag(persona.id)
                 }
             }
         }
         .toolbar {
+#if os(macOS)
+            ToolbarItem {
+                Picker("Persona", selection: $selectedPersonaID) {
+                    ForEach(PERSONAS, id: \.id) { persona in
+                        Text("\(persona.emoji)  \(persona.name)")
+                            .font(persona.font)
+                            .tag(persona.id)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+#endif
             ToolbarItem {
                 Button("Clear Chat", systemImage: "square.and.pencil", action: clearChat)
             }
         }
         .toolbarTitleDisplayMode(.inline)
+        .font(selectedPersona.font)
     }
 
     private func addMessage() {
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
 
-        bot?.ask(
-            text,
-            messages,
-            onComplete: { _ in
+        let prompt = Message(role: .user, text: text)
+        let response = Message(role: .bot, text: "")
+        modelContext.insert(prompt)
+        modelContext.insert(response)
+        do { try modelContext.save() }
+        catch { return }
+
+        Task {
+            do {
+                try await bot?.ask(
+                    prompt: prompt.text,
+                    response: response,
+                    history: messages
+                )
                 isTextFieldFocused = true
-            },
-            onError: { _ in
-                showError = true
+            } catch {
+
+                bot = try? .init(context: modelContext)
+                
+                do {
+                    try await bot?.ask(
+                        prompt: prompt.text,
+                        response: response,
+                        history: messages
+                    )
+                } catch {
+                    showError = true
+                }
             }
-        )
-        text = ""
+        }
+
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy) {
