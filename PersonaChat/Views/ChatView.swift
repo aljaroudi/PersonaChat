@@ -36,72 +36,50 @@ struct ChatView: View {
     @State
     private var showError = false
     
-    @State
-    private var scrollProxy: ScrollViewProxy?
-    
-    private var chatScrollView: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(messages) { message in
-                        MessageRow(message)
-                            .tag(message.id)
+    var body: some View {
+        ZStack {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(messages) { message in
+                            MessageRow(message)
+                                .tag(message.id)
+                        }
+                    }
+                    .padding(.bottom, 80)
+                }
+                .onAppear {
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: messages.count) { _, _ in
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: bot?.isGenerating) { _, _ in
+                    scrollToBottom(proxy: proxy)
+                }
+            }
+            
+            VStack {
+                Spacer()
+                
+                HStack {
+                    TextField("Type a message...", text: $text)
+                        .onSubmit(addMessage)
+                        .focused($isTextFieldFocused)
+                        .submitLabel(.send)
+                        .textFieldStyle(.plain)
+                        .disabled(bot?.isGenerating ?? false)
+                    
+                    if bot?.isGenerating == true {
+                        Button("Stop", systemImage: "square.fill") {
+                            bot?.stop()
+                        }.labelStyle(.iconOnly)
                     }
                 }
-                .padding(.bottom, 20)
-            }
-            .onAppear {
-                scrollProxy = proxy
-                proxy.scroll(to: messages.last?.id)
-            }
-        }
-    }
-    
-    private var textInputView: some View {
-        HStack {
-            TextField("Type a message...", text: $text)
-                .onSubmit(addMessage)
-                .focused($isTextFieldFocused)
-                .submitLabel(.send)
-                .textFieldStyle(.plain)
-                .disabled(bot?.isGenerating ?? false)
-            
-            if bot?.isGenerating == true {
-                Button("Stop", systemImage: "square.fill") {
-                    bot?.stop()
-                }.labelStyle(.iconOnly)
-            }
-        }
-        .padding()
-        .background(backgroundMaterial)
-        .clipShape(.rect(cornerRadius: 20))
-        .padding()
-    }
-    
-    @ViewBuilder
-    private var backgroundMaterial: some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            Color.clear
-                .glassEffect(.regular.interactive())
-        } else {
-            ZStack {
-                Color.clear
-                Rectangle().fill(.ultraThinMaterial)
-            }
-        }
-    }
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            chatScrollView
-            textInputView
-        }
-        .onChange(of: messages.count) { _, _ in
-            scrollProxy?.scroll(to: messages.last?.id)
-        }
-        .onChange(of: bot?.isGenerating) { _, newValue in
-            if newValue {
-                scrollProxy?.scroll(to: messages.last?.id)
+                .padding()
+                .background(.ultraThinMaterial)
+                .clipShape(.rect(cornerRadius: 20))
+                .padding()
             }
         }
         .background(
@@ -167,12 +145,8 @@ struct ChatView: View {
         do { try modelContext.save() }
         catch { return }
 
-        // Clear text and scroll to bottom immediately
+        // Clear text immediately
         text = ""
-        // Scroll when message is completed
-        defer {
-            scrollProxy?.scrollTo(response.id)
-        }
         
         Task {
             do {
@@ -200,6 +174,15 @@ struct ChatView: View {
 
     }
     
+    private func scrollToBottom(proxy: ScrollViewProxy) {
+        guard let last = messages.last else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                proxy.scrollTo(last.id, anchor: .bottom)
+            }
+        }
+    }
+    
     @MainActor
     private func clearChat() {
         bot?.stop()
@@ -212,16 +195,6 @@ struct ChatView: View {
     }
 }
 
-fileprivate extension ScrollViewProxy {
-    func scroll<ID>(to id: ID?) where ID: Hashable {
-        guard let id else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation(.easeOut(duration: 0.3)) {
-                self.scrollTo(id, anchor: .bottom)
-            }
-        }
-    }
-}
 
 #Preview {
     NavigationStack {
