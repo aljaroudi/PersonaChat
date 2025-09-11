@@ -36,67 +36,72 @@ struct ChatView: View {
     @State
     private var showError = false
     
-    var body: some View {
-        ZStack {
-            
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(messages) { message in
-                            MessageRow(message)
-                                .tag(message.id)
-                        }
+    @State
+    private var scrollProxy: ScrollViewProxy?
+    
+    private var chatScrollView: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(messages) { message in
+                        MessageRow(message)
+                            .tag(message.id)
                     }
-                    .padding(.bottom, 80)
                 }
-                .onAppear {
-                    scrollToBottom(proxy: proxy)
-                }
-                .onChange(of: messages) {
-                    scrollToBottom(proxy: proxy)
-                }
+                .padding(.bottom, 20)
             }
-            VStack {
-                Spacer()
-                
-                if #available(iOS 26.0, macOS 26.0, *) {
-                    HStack {
-                        TextField("Type a message...", text: $text)
-                            .onSubmit(addMessage)
-                            .focused($isTextFieldFocused)
-                            .submitLabel(.send)
-                            .textFieldStyle(.plain)
-                            .disabled(bot?.isGenerating ?? false)
-                        
-                        if bot?.isGenerating == true {
-                            Button("Stop", systemImage: "square.fill") {
-                                bot?.stop()
-                            }.labelStyle(.iconOnly)
-                        }
-                    }
-                    .padding()
-                    .glassEffect(.regular.interactive())
-                    .padding()
-                } else {
-                    HStack {
-                        TextField("Type a message...", text: $text)
-                            .onSubmit(addMessage)
-                            .focused($isTextFieldFocused)
-                            .submitLabel(.send)
-                            .textFieldStyle(.plain)
-                            .disabled(bot?.isGenerating ?? false)
-                        
-                        if bot?.isGenerating == true {
-                            Button("Stop", systemImage: "square.fill") {
-                                bot?.stop()
-                            }.labelStyle(.iconOnly)
-                        }
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial)
-                    .clipShape(.rect(cornerRadius: 20))
-                    .padding()
-                }
+            .onAppear {
+                scrollProxy = proxy
+                proxy.scroll(to: messages.last?.id)
+            }
+        }
+    }
+    
+    private var textInputView: some View {
+        HStack {
+            TextField("Type a message...", text: $text)
+                .onSubmit(addMessage)
+                .focused($isTextFieldFocused)
+                .submitLabel(.send)
+                .textFieldStyle(.plain)
+                .disabled(bot?.isGenerating ?? false)
+            
+            if bot?.isGenerating == true {
+                Button("Stop", systemImage: "square.fill") {
+                    bot?.stop()
+                }.labelStyle(.iconOnly)
+            }
+        }
+        .padding()
+        .background(backgroundMaterial)
+        .clipShape(.rect(cornerRadius: 20))
+        .padding()
+    }
+    
+    @ViewBuilder
+    private var backgroundMaterial: some View {
+        if #available(iOS 26.0, macOS 26.0, *) {
+            Color.clear
+                .glassEffect(.regular.interactive())
+        } else {
+            ZStack {
+                Color.clear
+                Rectangle().fill(.ultraThinMaterial)
+            }
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            chatScrollView
+            textInputView
+        }
+        .onChange(of: messages.count) { _, _ in
+            scrollProxy?.scroll(to: messages.last?.id)
+        }
+        .onChange(of: bot?.isGenerating) { _, newValue in
+            if newValue {
+                scrollProxy?.scroll(to: messages.last?.id)
             }
         }
         .background(
@@ -122,12 +127,10 @@ struct ChatView: View {
         }
         .alert("Error responding", isPresented: $showError) {}
         .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
-        //        .navigationBarTitleDisplayMode(.inline)
         .toolbarTitleMenu {
             Picker("Persona", selection: $selectedPersonaID) {
                 ForEach(PERSONAS, id: \.id) { persona in
                     Text("\(persona.emoji)  \(persona.name)")
-                        .font(persona.font)
                         .tag(persona.id)
                 }
             }
@@ -163,6 +166,13 @@ struct ChatView: View {
         modelContext.insert(response)
         do { try modelContext.save() }
         catch { return }
+
+        // Clear text and scroll to bottom immediately
+        text = ""
+        // Scroll when message is completed
+        defer {
+            scrollProxy?.scrollTo(response.id)
+        }
         
         Task {
             do {
@@ -187,16 +197,7 @@ struct ChatView: View {
                 }
             }
         }
-        
-    }
-    
-    private func scrollToBottom(proxy: ScrollViewProxy) {
-        guard let last = messages.last else { return }
-        DispatchQueue.main.async {
-            withAnimation {
-                proxy.scrollTo(last.id, anchor: .bottom)
-            }
-        }
+
     }
     
     @MainActor
@@ -208,6 +209,17 @@ struct ChatView: View {
             text: selectedPersona.greeting
         ))
         try? modelContext.save()
+    }
+}
+
+fileprivate extension ScrollViewProxy {
+    func scroll<ID>(to id: ID?) where ID: Hashable {
+        guard let id else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                self.scrollTo(id, anchor: .bottom)
+            }
+        }
     }
 }
 
