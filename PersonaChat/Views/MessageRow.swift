@@ -26,8 +26,9 @@ struct MessageRow: View {
             }
             .padding()
         } else {
-            MaybeMarkdown(message.text)
+            Text(message.text)
                 .padding(.horizontal)
+                .lineHeight(.loose)
         }
     }
 }
