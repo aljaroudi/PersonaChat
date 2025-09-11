@@ -44,55 +44,56 @@ final class Bot {
 
     func ask(
         _ prompt: String,
-        _ messages: [Message],
-        onComplete: (@MainActor @Sendable (_ msg: Message) -> Void)? = nil,
-        onError: (@MainActor @Sendable (_ err: BotError) -> Void)? = nil
-    ) {
-        guard !isGenerating, !prompt.isEmpty else { return }
+        _ messages: [Message]
+    ) async throws(BotError) -> Message {
+        guard !isGenerating, !prompt.isEmpty else { 
+            throw BotError.noOutput 
+        }
         isGenerating = true
+        defer { isGenerating = false }
 
+        // Prepare data
         bot.history = messages.map { msg in
             (msg.role == .user ? .user : .bot, msg.text)
         }
 
-        context.insert(Message(role: .user, text: prompt))
-
+        let userMessage = Message(role: .user, text: prompt)
         let assistant = Message(role: .bot, text: "")
+        
+        // Insert messages
+        context.insert(userMessage)
         context.insert(assistant)
 
-        Task { [weak self] in
-            guard let self else { return }
+        print("History limit: \(bot.historyLimit)")
 
-            defer {
-                Task { @MainActor in
-                    self.isGenerating = false
-                }
+
+        do {
+            try context.save()
+        } catch {
+            throw BotError.persistanceFailed
+        }
+
+        var sawAnyChunk = false
+
+        // Stream response
+        await bot.respond(to: prompt) { [self] stream in
+            for await chunk in stream {
+                sawAnyChunk = true
+                assistant.text += chunk
+                try? context.save()
             }
+            return assistant.text
+        }
 
-            var sawAnyChunk = false
-            // Stream
-            await bot.respond(to: prompt) { stream in
-                for await chunk in stream {
-                    sawAnyChunk = true
-                    await MainActor.run {
-                        assistant.text += chunk
-                        try? self.context.save()
-                    }
-                }
-                return assistant.text
-            }
+        if !sawAnyChunk {
+            throw BotError.noOutput
+        }
 
-            if !sawAnyChunk {
-                await MainActor.run { onError?(.noOutput) }
-                return
-            }
-
-            await MainActor.run {
-
-                do { try self.context.save() }
-                catch { onError?(.persistanceFailed) }
-                onComplete?(assistant)
-            }
+        do {
+            try context.save()
+            return assistant
+        } catch {
+            throw BotError.persistanceFailed
         }
     }
 
