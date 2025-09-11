@@ -10,32 +10,38 @@ import SwiftData
 import LLM
 
 struct ChatView: View {
-    
+
     @Environment(\.modelContext)
     private var modelContext
-    
+
     @Query(sort: \Message.date)
     private var messages: [Message]
-    
+
     @State
     private var text = ""
-    
+
     @FocusState
     private var isTextFieldFocused: Bool
-    
+
     @AppStorage("selectedPersonaID")
     private var selectedPersonaID = PERSONAS.first?.id ?? "luna"
-    
+
     private var selectedPersona: Persona {
         PERSONAS.first { $0.id == selectedPersonaID } ?? PERSONAS[0]
     }
-    
+
     @State
     private var bot: Bot?
-    
+
     @State
     private var showError = false
-    
+
+    @State
+    private var textFieldHeight: CGFloat = 0
+
+    @State
+    private var scrollTrigger: Int = 0
+
     var body: some View {
         ZStack {
             ScrollViewReader { proxy in
@@ -46,7 +52,7 @@ struct ChatView: View {
                                 .tag(message.id)
                         }
                     }
-                    .padding(.bottom, 80)
+                    .padding(.bottom, textFieldHeight + 20) // Dynamic padding based on text field height + some extra space
                 }
                 .onAppear {
                     scrollToBottom(proxy: proxy)
@@ -57,11 +63,17 @@ struct ChatView: View {
                 .onChange(of: bot?.isGenerating) { _, _ in
                     scrollToBottom(proxy: proxy)
                 }
+                .onChange(of: textFieldHeight) { _, _ in
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: scrollTrigger) { _, _ in
+                    scrollToBottom(proxy: proxy)
+                }
             }
-            
+
             VStack {
                 Spacer()
-                
+
                 HStack {
                     TextField("Type a message...", text: $text)
                         .onSubmit(addMessage)
@@ -69,7 +81,7 @@ struct ChatView: View {
                         .submitLabel(.send)
                         .textFieldStyle(.plain)
                         .disabled(bot?.isGenerating ?? false)
-                    
+
                     if bot?.isGenerating == true {
                         Button("Stop", systemImage: "square.fill") {
                             bot?.stop()
@@ -80,6 +92,19 @@ struct ChatView: View {
                 .background(.ultraThinMaterial)
                 .clipShape(.rect(cornerRadius: 20))
                 .padding()
+                .background(
+                    GeometryReader { geometry in
+                        Color.clear
+                            .onAppear {
+                                textFieldHeight = geometry.size.height
+                            }
+                            .onChange(of: geometry.size.height) { _, newHeight in
+                                if newHeight > 0 {
+                                    textFieldHeight = newHeight
+                                }
+                            }
+                    }
+                )
             }
         }
         .background(
@@ -132,12 +157,19 @@ struct ChatView: View {
         }
         .toolbarTitleDisplayMode(.inline)
         .font(.custom(selectedPersona.fontName, size: 18, relativeTo: .body))
+        .onChange(of: isTextFieldFocused) { _, isFocused in
+            guard isFocused else { return }
+            // Scroll to bottom when text field is focused
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                scrollTrigger += 1
+            }
+        }
     }
-    
+
     private func addMessage() {
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        
+
         let prompt = Message(role: .user, text: text)
         let response = Message(role: .bot, text: "")
         modelContext.insert(prompt)
@@ -147,7 +179,7 @@ struct ChatView: View {
 
         // Clear text immediately
         text = ""
-        
+
         Task {
             do {
                 try await bot?.ask(
@@ -157,9 +189,9 @@ struct ChatView: View {
                 )
                 isTextFieldFocused = true
             } catch {
-                
+
                 bot = try? .init(context: modelContext)
-                
+
                 do {
                     try await bot?.ask(
                         prompt: prompt.text,
@@ -173,16 +205,16 @@ struct ChatView: View {
         }
 
     }
-    
+
     private func scrollToBottom(proxy: ScrollViewProxy) {
         guard let last = messages.last else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.easeOut(duration: 0.3)) {
-                proxy.scrollTo(last.id, anchor: .bottom)
+                proxy.scrollTo(last.id, anchor: .top)
             }
         }
     }
-    
+
     @MainActor
     private func clearChat() {
         bot?.stop()
