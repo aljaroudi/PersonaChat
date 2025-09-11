@@ -12,8 +12,6 @@
 		<string>PlaypenSansDeva-VariableFont_wght.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
+	<array/>
 </dict>
 </plist>
