@@ -25,9 +25,17 @@ struct ChatView: View {
 
     @AppStorage("selectedPersonaID")
     private var selectedPersonaID = PERSONAS.first?.id ?? "luna"
+    
+    @AppStorage("onboardingVersion")
+    private var onboardingVersion: String?
 
     private var selectedPersona: Persona {
         PERSONAS.first { $0.id == selectedPersonaID } ?? PERSONAS[0]
+    }
+
+    /// Show onboarding message if it hasn't been shown and chat is empty (excluding the persona's initial message)
+    private var shouldShowOnboarding: Bool {
+        onboardingVersion != CURRENT_ONBOARDING_VERSION && messages.count == 1
     }
 
     @State
@@ -66,6 +74,18 @@ struct ChatView: View {
                 .onChange(of: scrollTrigger) { _, _ in
                     scrollToBottom(proxy: proxy)
                 }
+                .task {
+                    // lazy init once we have a ModelContext in scope
+                    if bot == nil {
+                        bot = try! .init(context: modelContext)
+                    }
+
+                    // Show onboarding message with typing simulation
+                    if shouldShowOnboarding {
+                        await showOnboardingWithTyping()
+                        scrollToBottom(proxy: proxy)
+                    }
+                }
             }
 
             VStack {
@@ -77,7 +97,7 @@ struct ChatView: View {
                         .focused($isTextFieldFocused)
                         .submitLabel(.send)
                         .textFieldStyle(.plain)
-                        .disabled(bot?.isGenerating ?? false)
+                        .disabled((bot?.isGenerating ?? false))
 
                     if bot?.isGenerating == true {
                         Button("Stop", systemImage: "square.fill") {
@@ -119,12 +139,6 @@ struct ChatView: View {
             clearChat()
             bot?.set(persona: selectedPersona)
         }
-        .task {
-            // lazy init once we have a ModelContext in scope
-            if bot == nil {
-                bot = try! .init(context: modelContext)
-            }
-        }
         .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
         .toolbarTitleMenu {
             Picker("Persona", selection: $selectedPersonaID) {
@@ -160,6 +174,30 @@ struct ChatView: View {
                 scrollTrigger += 1
             }
         }
+    }
+    
+    @MainActor
+    private func showOnboardingWithTyping() async {
+        let onboardingMessage = Message(role: .bot, text: "")
+        modelContext.insert(onboardingMessage)
+        try? modelContext.save()
+        
+        // Simulate typing effect
+        let fullText = Message.onboarding
+
+        for i in 0...fullText.count {
+            onboardingMessage.text = String(fullText.prefix(i))
+            try? modelContext.save()
+            
+            // Scroll to bottom during typing
+            scrollTrigger += 1
+            
+            // Vary typing speed for more realistic effect
+            let delay = fullText[fullText.index(fullText.startIndex, offsetBy: min(i, fullText.count - 1))] == " " ? 0.05 : 0.03
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        }
+
+        onboardingVersion = CURRENT_ONBOARDING_VERSION
     }
 
     private func addMessage() {
