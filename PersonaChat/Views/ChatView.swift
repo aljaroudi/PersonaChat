@@ -25,145 +25,217 @@ struct ChatView: View {
 
     @AppStorage("selectedPersonaID")
     private var selectedPersonaID = PERSONAS.first?.id ?? "luna"
+    
+    @AppStorage("onboardingVersion")
+    private var onboardingVersion: String?
 
     private var selectedPersona: Persona {
         PERSONAS.first { $0.id == selectedPersonaID } ?? PERSONAS[0]
+    }
+
+    /// Show onboarding message if it hasn't been shown and chat is empty (excluding the persona's initial message)
+    private var shouldShowOnboarding: Bool {
+        onboardingVersion != CURRENT_ONBOARDING_VERSION && messages.count == 1
     }
 
     @State
     private var bot: Bot?
 
     @State
-    private var showError = false
-
-    @State
     private var textFieldHeight: CGFloat = 0
 
     @State
     private var scrollTrigger: Int = 0
+    
+    @State
+    private var hapticTrigger: Int = 0
 
     var body: some View {
+        mainContent
+            .background(backgroundView)
+            .onChange(of: selectedPersonaID) {
+                clearChat()
+                bot?.set(persona: selectedPersona)
+            }
+            .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
+            .toolbarTitleMenu { personaPicker }
+            .toolbar { toolbarContent }
+            .toolbarTitleDisplayMode(.inline)
+            .font(.custom(selectedPersona.fontName, size: 18, relativeTo: .body))
+            .onChange(of: isTextFieldFocused) { _, isFocused in
+                handleTextFieldFocus(isFocused)
+            }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+    }
+    
+    private var mainContent: some View {
         ZStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(messages) { message in
-                            MessageRow(message)
-                                .tag(message.id)
-                        }
+            chatScrollView
+            inputArea
+        }
+    }
+    
+    private var chatScrollView: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(messages) { message in
+                        MessageRow(message)
+                            .tag(message.id)
                     }
-                    .padding(.bottom, textFieldHeight + 20) // Dynamic padding based on text field height + some extra space
                 }
+                .padding(.bottom, textFieldHeight + 20)
+            }
+            .onAppear {
+                scrollToBottom(proxy: proxy)
+            }
+            .onChange(of: messages.count) { _, _ in
+                scrollToBottom(proxy: proxy)
+            }
+            .onChange(of: bot?.isGenerating) { _, _ in
+                scrollToBottom(proxy: proxy)
+            }
+            .onChange(of: textFieldHeight) { _, _ in
+                scrollToBottom(proxy: proxy)
+            }
+            .onChange(of: scrollTrigger) { _, _ in
+                scrollToBottom(proxy: proxy)
+            }
+            .task {
+                await handleTask(proxy: proxy)
+            }
+        }
+    }
+    
+    private var inputArea: some View {
+        VStack {
+            Spacer()
+            inputField
+        }
+    }
+    
+    private var inputField: some View {
+        HStack {
+            TextField("Type a message...", text: $text)
+                .onSubmit(addMessage)
+                .focused($isTextFieldFocused)
+                .submitLabel(.send)
+                .textFieldStyle(.plain)
+                .disabled((bot?.isGenerating ?? false))
+
+            if bot?.isGenerating == true {
+                Button("Stop", systemImage: "square.fill") {
+                    bot?.stop()
+                }.labelStyle(.iconOnly)
+            }
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .clipShape(.rect(cornerRadius: 20))
+        .padding()
+        .background(textFieldHeightReader)
+    }
+    
+    private var textFieldHeightReader: some View {
+        GeometryReader { geometry in
+            Color.clear
                 .onAppear {
-                    scrollToBottom(proxy: proxy)
+                    textFieldHeight = geometry.size.height
                 }
-                .onChange(of: messages.count) { _, _ in
-                    scrollToBottom(proxy: proxy)
-                }
-                .onChange(of: bot?.isGenerating) { _, _ in
-                    scrollToBottom(proxy: proxy)
-                }
-                .onChange(of: textFieldHeight) { _, _ in
-                    scrollToBottom(proxy: proxy)
-                }
-                .onChange(of: scrollTrigger) { _, _ in
-                    scrollToBottom(proxy: proxy)
-                }
-            }
-
-            VStack {
-                Spacer()
-
-                HStack {
-                    TextField("Type a message...", text: $text)
-                        .onSubmit(addMessage)
-                        .focused($isTextFieldFocused)
-                        .submitLabel(.send)
-                        .textFieldStyle(.plain)
-                        .disabled(bot?.isGenerating ?? false)
-
-                    if bot?.isGenerating == true {
-                        Button("Stop", systemImage: "square.fill") {
-                            bot?.stop()
-                        }.labelStyle(.iconOnly)
+                .onChange(of: geometry.size.height) { _, newHeight in
+                    if newHeight > 0 {
+                        textFieldHeight = newHeight
                     }
                 }
-                .padding()
-                .background(.ultraThinMaterial)
-                .clipShape(.rect(cornerRadius: 20))
-                .padding()
-                .background(
-                    GeometryReader { geometry in
-                        Color.clear
-                            .onAppear {
-                                textFieldHeight = geometry.size.height
-                            }
-                            .onChange(of: geometry.size.height) { _, newHeight in
-                                if newHeight > 0 {
-                                    textFieldHeight = newHeight
-                                }
-                            }
-                    }
-                )
+        }
+    }
+    
+    private var backgroundView: some View {
+        ZStack {
+            Image(selectedPersona.backgroundImage)
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+            Rectangle()
+                .fill(.ultraThickMaterial.opacity(0.95))
+                .ignoresSafeArea()
+        }
+    }
+    
+    private var personaPicker: some View {
+        Picker("Persona", selection: $selectedPersonaID) {
+            ForEach(PERSONAS, id: \.id) { persona in
+                Text("\(persona.emoji)  \(persona.name)")
+                    .tag(persona.id)
             }
         }
-        .background(
-            ZStack {
-                Image(selectedPersona.backgroundImage)
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                Rectangle()
-                    .fill(.ultraThickMaterial.opacity(0.95))
-                    .ignoresSafeArea()
-            }
-        )
-        .onChange(of: selectedPersonaID) {
-            clearChat()
-            bot?.set(persona: selectedPersona)
-        }
-        .task {
-            // lazy init once we have a ModelContext in scope
-            if bot == nil {
-                bot = try! .init(context: modelContext)
-            }
-        }
-        .alert("Error responding", isPresented: $showError) {}
-        .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
-        .toolbarTitleMenu {
+    }
+    
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+#if os(macOS)
+        ToolbarItem {
             Picker("Persona", selection: $selectedPersonaID) {
                 ForEach(PERSONAS, id: \.id) { persona in
                     Text("\(persona.emoji)  \(persona.name)")
+                        .font(persona.font)
                         .tag(persona.id)
                 }
             }
+            .pickerStyle(.menu)
         }
-        .toolbar {
-#if os(macOS)
-            ToolbarItem {
-                Picker("Persona", selection: $selectedPersonaID) {
-                    ForEach(PERSONAS, id: \.id) { persona in
-                        Text("\(persona.emoji)  \(persona.name)")
-                            .font(persona.font)
-                            .tag(persona.id)
-                    }
-                }
-                .pickerStyle(.menu)
-            }
 #endif
-            ToolbarItem {
-                Button("Clear Chat", systemImage: "square.and.pencil", action: clearChat)
+        ToolbarItem {
+            Button("Clear Chat", systemImage: "square.and.pencil", action: clearChat)
+        }
+    }
+    
+    @MainActor
+    private func handleTask(proxy: ScrollViewProxy) async {
+        // lazy init once we have a ModelContext in scope
+        if bot == nil {
+            bot = try! .init(context: modelContext) {
+                hapticTrigger += 1
             }
         }
-        .toolbarTitleDisplayMode(.inline)
-        .font(.custom(selectedPersona.fontName, size: 18, relativeTo: .body))
-        .onChange(of: isTextFieldFocused) { _, isFocused in
-            guard isFocused else { return }
-            // Scroll to bottom when text field is focused
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                scrollTrigger += 1
-            }
+
+        // Show onboarding message with typing simulation
+        if shouldShowOnboarding {
+            await showOnboardingWithTyping()
+            scrollToBottom(proxy: proxy)
         }
+    }
+    
+    private func handleTextFieldFocus(_ isFocused: Bool) {
+        guard isFocused else { return }
+        // Scroll to bottom when text field is focused
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            scrollTrigger += 1
+        }
+    }
+    
+    @MainActor
+    private func showOnboardingWithTyping() async {
+        let onboardingMessage = Message(role: .bot, text: "")
+        modelContext.insert(onboardingMessage)
+        try? modelContext.save()
+        
+        // Simulate typing effect
+        let fullText = Message.onboarding
+
+        for i in 0...fullText.count {
+            onboardingMessage.text = String(fullText.prefix(i))
+            try? modelContext.save()
+            
+            scrollTrigger += 1
+            hapticTrigger += 1
+            
+            // Vary typing speed for more realistic effect
+            let delay = fullText[fullText.index(fullText.startIndex, offsetBy: min(i, fullText.count - 1))] == " " ? 0.05 : 0.03
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        }
+
+        onboardingVersion = CURRENT_ONBOARDING_VERSION
     }
 
     private func addMessage() {
@@ -190,7 +262,9 @@ struct ChatView: View {
                 isTextFieldFocused = true
             } catch {
 
-                bot = try? .init(context: modelContext)
+                bot = try? .init(context: modelContext) {
+                    hapticTrigger += 1
+                }
 
                 do {
                     try await bot?.ask(
@@ -199,7 +273,8 @@ struct ChatView: View {
                         history: messages
                     )
                 } catch {
-                    showError = true
+                    response.text += ".. Oops, something went wrong!"
+                    try? self.modelContext.save()
                 }
             }
         }
