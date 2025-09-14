@@ -2,9 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UIBackgroundModes</key>
+	<key>UIAppFonts</key>
 	<array>
-		<string>remote-notification</string>
+		<string>Almendra-Regular.ttf</string>
+		<string>EduNSWACTCursive-VariableFont_wght.ttf</string>
+		<string>Electrolize-Regular.ttf</string>
+		<string>GochiHand-Regular.ttf</string>
+		<string>LibertinusSerifDisplay-Regular.ttf</string>
+		<string>PlaypenSansDeva-VariableFont_wght.ttf</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array/>
 </dict>
 </plist>

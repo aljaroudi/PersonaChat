@@ -6,27 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXContainerItemProxy section */
-		15694F2E2E621F2100AF4BA3 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 15694F142E621F2000AF4BA3 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 15694F1B2E621F2000AF4BA3;
-			remoteInfo = PersonaChat;
-		};
-		15694F382E621F2100AF4BA3 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 15694F142E621F2000AF4BA3 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 15694F1B2E621F2000AF4BA3;
-			remoteInfo = PersonaChat;
-		};
-/* End PBXContainerItemProxy section */
+/* Begin PBXBuildFile section */
+		1513A5392E735F51003667DC /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 1513A5382E735F51003667DC /* AppIcon.icon */; };
+		15A246C22E70BF7700B8FC75 /* LLM in Frameworks */ = {isa = PBXBuildFile; productRef = 15A246C12E70BF7700B8FC75 /* LLM */; };
+/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1513A5382E735F51003667DC /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		15694F1C2E621F2000AF4BA3 /* PersonaChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersonaChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		15694F2D2E621F2100AF4BA3 /* PersonaChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		15694F372E621F2100AF4BA3 /* PersonaChatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PersonaChatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -55,20 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		15694F2A2E621F2100AF4BA3 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		15694F342E621F2100AF4BA3 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				15A246C22E70BF7700B8FC75 /* LLM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -80,6 +54,7 @@
 			children = (
 				15694F1E2E621F2000AF4BA3 /* PersonaChat */,
 				15694F1D2E621F2000AF4BA3 /* Products */,
+				1513A5382E735F51003667DC /* AppIcon.icon */,
 			);
 			sourceTree = "<group>";
 		};
@@ -87,8 +62,6 @@
 			isa = PBXGroup;
 			children = (
 				15694F1C2E621F2000AF4BA3 /* PersonaChat.app */,
-				15694F2D2E621F2100AF4BA3 /* PersonaChatTests.xctest */,
-				15694F372E621F2100AF4BA3 /* PersonaChatUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -113,50 +86,11 @@
 			);
 			name = PersonaChat;
 			packageProductDependencies = (
+				15A246C12E70BF7700B8FC75 /* LLM */,
 			);
 			productName = PersonaChat;
 			productReference = 15694F1C2E621F2000AF4BA3 /* PersonaChat.app */;
 			productType = "com.apple.product-type.application";
-		};
-		15694F2C2E621F2100AF4BA3 /* PersonaChatTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 15694F452E621F2100AF4BA3 /* Build configuration list for PBXNativeTarget "PersonaChatTests" */;
-			buildPhases = (
-				15694F292E621F2100AF4BA3 /* Sources */,
-				15694F2A2E621F2100AF4BA3 /* Frameworks */,
-				15694F2B2E621F2100AF4BA3 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				15694F2F2E621F2100AF4BA3 /* PBXTargetDependency */,
-			);
-			name = PersonaChatTests;
-			packageProductDependencies = (
-			);
-			productName = PersonaChatTests;
-			productReference = 15694F2D2E621F2100AF4BA3 /* PersonaChatTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		15694F362E621F2100AF4BA3 /* PersonaChatUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 15694F482E621F2100AF4BA3 /* Build configuration list for PBXNativeTarget "PersonaChatUITests" */;
-			buildPhases = (
-				15694F332E621F2100AF4BA3 /* Sources */,
-				15694F342E621F2100AF4BA3 /* Frameworks */,
-				15694F352E621F2100AF4BA3 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				15694F392E621F2100AF4BA3 /* PBXTargetDependency */,
-			);
-			name = PersonaChatUITests;
-			packageProductDependencies = (
-			);
-			productName = PersonaChatUITests;
-			productReference = 15694F372E621F2100AF4BA3 /* PersonaChatUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -171,14 +105,6 @@
 					15694F1B2E621F2000AF4BA3 = {
 						CreatedOnToolsVersion = 26.0;
 					};
-					15694F2C2E621F2100AF4BA3 = {
-						CreatedOnToolsVersion = 26.0;
-						TestTargetID = 15694F1B2E621F2000AF4BA3;
-					};
-					15694F362E621F2100AF4BA3 = {
-						CreatedOnToolsVersion = 26.0;
-						TestTargetID = 15694F1B2E621F2000AF4BA3;
-					};
 				};
 			};
 			buildConfigurationList = 15694F172E621F2000AF4BA3 /* Build configuration list for PBXProject "PersonaChat" */;
@@ -190,14 +116,15 @@
 			);
 			mainGroup = 15694F132E621F2000AF4BA3;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				15A246C02E70BF7700B8FC75 /* XCRemoteSwiftPackageReference "LLM.swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 15694F1D2E621F2000AF4BA3 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				15694F1B2E621F2000AF4BA3 /* PersonaChat */,
-				15694F2C2E621F2100AF4BA3 /* PersonaChatTests */,
-				15694F362E621F2100AF4BA3 /* PersonaChatUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -207,20 +134,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		15694F2B2E621F2100AF4BA3 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		15694F352E621F2100AF4BA3 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				1513A5392E735F51003667DC /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -234,34 +148,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		15694F292E621F2100AF4BA3 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		15694F332E621F2100AF4BA3 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		15694F2F2E621F2100AF4BA3 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 15694F1B2E621F2000AF4BA3 /* PersonaChat */;
-			targetProxy = 15694F2E2E621F2100AF4BA3 /* PBXContainerItemProxy */;
-		};
-		15694F392E621F2100AF4BA3 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 15694F1B2E621F2000AF4BA3 /* PersonaChat */;
-			targetProxy = 15694F382E621F2100AF4BA3 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		15694F412E621F2100AF4BA3 /* Debug */ = {
@@ -277,6 +164,8 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PersonaChat/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StoryFriends;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -285,25 +174,26 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PersonaChat;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aljaroudi.StoryFriends;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				XROS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Debug;
@@ -321,6 +211,8 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PersonaChat/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StoryFriends;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -329,25 +221,26 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PersonaChat;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aljaroudi.StoryFriends;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				XROS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
@@ -466,104 +359,6 @@
 			};
 			name = Release;
 		};
-		15694F462E621F2100AF4BA3 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PersonaChatTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PersonaChat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PersonaChat";
-				XROS_DEPLOYMENT_TARGET = 26.0;
-			};
-			name = Debug;
-		};
-		15694F472E621F2100AF4BA3 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PersonaChatTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PersonaChat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PersonaChat";
-				XROS_DEPLOYMENT_TARGET = 26.0;
-			};
-			name = Release;
-		};
-		15694F492E621F2100AF4BA3 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PersonaChatUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = PersonaChat;
-				XROS_DEPLOYMENT_TARGET = 26.0;
-			};
-			name = Debug;
-		};
-		15694F4A2E621F2100AF4BA3 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.PersonaChatUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = PersonaChat;
-				XROS_DEPLOYMENT_TARGET = 26.0;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -585,25 +380,26 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		15694F452E621F2100AF4BA3 /* Build configuration list for PBXNativeTarget "PersonaChatTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				15694F462E621F2100AF4BA3 /* Debug */,
-				15694F472E621F2100AF4BA3 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		15694F482E621F2100AF4BA3 /* Build configuration list for PBXNativeTarget "PersonaChatUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				15694F492E621F2100AF4BA3 /* Debug */,
-				15694F4A2E621F2100AF4BA3 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		15A246C02E70BF7700B8FC75 /* XCRemoteSwiftPackageReference "LLM.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/eastriverlee/LLM.swift.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		15A246C12E70BF7700B8FC75 /* LLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 15A246C02E70BF7700B8FC75 /* XCRemoteSwiftPackageReference "LLM.swift" */;
+			productName = LLM;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 15694F142E621F2000AF4BA3 /* Project object */;
 }

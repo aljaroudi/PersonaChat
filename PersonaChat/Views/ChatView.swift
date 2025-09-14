@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import LLM
 
 struct ChatView: View {
 
@@ -29,9 +30,20 @@ struct ChatView: View {
         PERSONAS.first { $0.id == selectedPersonaID } ?? PERSONAS[0]
     }
 
+    @State
+    private var bot: Bot?
+
+    @State
+    private var showError = false
+
+    @State
+    private var textFieldHeight: CGFloat = 0
+
+    @State
+    private var scrollTrigger: Int = 0
+
     var body: some View {
         ZStack {
-
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
@@ -40,96 +52,172 @@ struct ChatView: View {
                                 .tag(message.id)
                         }
                     }
-                    .padding(.bottom, 80)
+                    .padding(.bottom, textFieldHeight + 20) // Dynamic padding based on text field height + some extra space
                 }
                 .onAppear {
                     scrollToBottom(proxy: proxy)
                 }
+                .onChange(of: messages.count) { _, _ in
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: bot?.isGenerating) { _, _ in
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: textFieldHeight) { _, _ in
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: scrollTrigger) { _, _ in
+                    scrollToBottom(proxy: proxy)
+                }
             }
+
             VStack {
                 Spacer()
 
-                if #available(iOS 26.0, macOS 26.0, *) {
-                    HStack {
-                        TextField("Type a message...", text: $text)
-                            .onSubmit(addMessage)
-                            .focused($isTextFieldFocused)
-                            .submitLabel(.send)
+                HStack {
+                    TextField("Type a message...", text: $text)
+                        .onSubmit(addMessage)
+                        .focused($isTextFieldFocused)
+                        .submitLabel(.send)
+                        .textFieldStyle(.plain)
+                        .disabled(bot?.isGenerating ?? false)
+
+                    if bot?.isGenerating == true {
+                        Button("Stop", systemImage: "square.fill") {
+                            bot?.stop()
+                        }.labelStyle(.iconOnly)
                     }
-                    .padding()
-                    .glassEffect(.regular.interactive())
-                    .padding()
-                } else {
-                    HStack {
-                        TextField("Type a message...", text: $text)
-                            .onSubmit(addMessage)
-                            .focused($isTextFieldFocused)
-                            .submitLabel(.send)
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial)
-                    .clipShape(.rect(cornerRadius: 20))
-                    .padding()
                 }
+                .padding()
+                .background(.ultraThinMaterial)
+                .clipShape(.rect(cornerRadius: 20))
+                .padding()
+                .background(
+                    GeometryReader { geometry in
+                        Color.clear
+                            .onAppear {
+                                textFieldHeight = geometry.size.height
+                            }
+                            .onChange(of: geometry.size.height) { _, newHeight in
+                                if newHeight > 0 {
+                                    textFieldHeight = newHeight
+                                }
+                            }
+                    }
+                )
             }
         }
-        .onChange(of: selectedPersonaID) { clearChat() }
+        .background(
+            ZStack {
+                Image(selectedPersona.backgroundImage)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                Rectangle()
+                    .fill(.ultraThickMaterial.opacity(0.95))
+                    .ignoresSafeArea()
+            }
+        )
+        .onChange(of: selectedPersonaID) {
+            clearChat()
+            bot?.set(persona: selectedPersona)
+        }
+        .task {
+            // lazy init once we have a ModelContext in scope
+            if bot == nil {
+                bot = try! .init(context: modelContext)
+            }
+        }
+        .alert("Error responding", isPresented: $showError) {}
         .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
         .toolbarTitleMenu {
             Picker("Persona", selection: $selectedPersonaID) {
                 ForEach(PERSONAS, id: \.id) { persona in
-                    Text("\(persona.emoji)  \(persona.name)").tag(persona.id)
+                    Text("\(persona.emoji)  \(persona.name)")
+                        .tag(persona.id)
                 }
             }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+#if os(macOS)
+            ToolbarItem {
+                Picker("Persona", selection: $selectedPersonaID) {
+                    ForEach(PERSONAS, id: \.id) { persona in
+                        Text("\(persona.emoji)  \(persona.name)")
+                            .font(persona.font)
+                            .tag(persona.id)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+#endif
+            ToolbarItem {
                 Button("Clear Chat", systemImage: "square.and.pencil", action: clearChat)
             }
         }
         .toolbarTitleDisplayMode(.inline)
+        .font(.custom(selectedPersona.fontName, size: 18, relativeTo: .body))
+        .onChange(of: isTextFieldFocused) { _, isFocused in
+            guard isFocused else { return }
+            // Scroll to bottom when text field is focused
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                scrollTrigger += 1
+            }
+        }
     }
 
-    @MainActor
     private func addMessage() {
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
 
-        let message = Message(role: .user,text: text)
-        modelContext.insert(message)
-        try? modelContext.save()
+        let prompt = Message(role: .user, text: text)
+        let response = Message(role: .bot, text: "")
+        modelContext.insert(prompt)
+        modelContext.insert(response)
+        do { try modelContext.save() }
+        catch { return }
 
-        guard #available(iOS 26.0, *) else { return }
-
-        let aiMessage = Message(role: .bot, text: "...")
-
-        modelContext.insert(aiMessage)
-
-        let stream = stream(messages, prompt: selectedPersona.fullPrompt)
+        // Clear text immediately
+        text = ""
 
         Task {
-            for await msg in stream {
-                aiMessage.text = msg
-                try? modelContext.save()
+            do {
+                try await bot?.ask(
+                    prompt: prompt.text,
+                    response: response,
+                    history: messages
+                )
+                isTextFieldFocused = true
+            } catch {
+
+                bot = try? .init(context: modelContext)
+
+                do {
+                    try await bot?.ask(
+                        prompt: prompt.text,
+                        response: response,
+                        history: messages
+                    )
+                } catch {
+                    showError = true
+                }
             }
         }
-
-        text = ""
-        isTextFieldFocused = true
 
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy) {
         guard let last = messages.last else { return }
-        DispatchQueue.main.async {
-            withAnimation {
-                proxy.scrollTo(last.id, anchor: .bottom)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                proxy.scrollTo(last.id, anchor: .top)
             }
         }
     }
 
     @MainActor
     private func clearChat() {
+        bot?.stop()
         try? modelContext.delete(model: Message.self)
         modelContext.insert(Message(
             role: .bot,
@@ -138,6 +226,7 @@ struct ChatView: View {
         try? modelContext.save()
     }
 }
+
 
 #Preview {
     NavigationStack {
