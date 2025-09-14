@@ -34,9 +34,6 @@ struct ChatView: View {
     private var bot: Bot?
 
     @State
-    private var showError = false
-
-    @State
     private var textFieldHeight: CGFloat = 0
 
     @State
@@ -128,7 +125,6 @@ struct ChatView: View {
                 bot = try! .init(context: modelContext)
             }
         }
-        .alert("Error responding", isPresented: $showError) {}
         .navigationTitle(selectedPersona.emoji + " " + selectedPersona.name)
         .toolbarTitleMenu {
             Picker("Persona", selection: $selectedPersonaID) {
@@ -199,7 +195,8 @@ struct ChatView: View {
                         history: messages
                     )
                 } catch {
-                    showError = true
+                    response.text += ".. Oops, something went wrong!"
+                    try? self.modelContext.save()
                 }
             }
         }
