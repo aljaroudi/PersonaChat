@@ -9,8 +9,8 @@ import LLM
 import SwiftUI
 import SwiftData
 
-enum BotError: Swift.Error {
-    case notFound, notLoaded, noOutput, persistanceFailed
+enum BotError: Error {
+    case notFound, notLoaded, noOutput, persistenceFailed
 }
 
 @MainActor
@@ -61,7 +61,7 @@ final class Bot {
         do {
             try context.save()
         } catch {
-            throw BotError.persistanceFailed
+            throw .persistenceFailed
         }
 
         var sawAnyChunk = false
@@ -83,7 +83,7 @@ final class Bot {
         do {
             try context.save()
         } catch {
-            throw BotError.persistanceFailed
+            throw .persistenceFailed
         }
     }
 
