@@ -23,6 +23,12 @@ StoryFriends is designed with privacy as our top priority. **Your data never lea
 - Selected AI persona
 - All data remains encrypted on your device
 
+## Acknowledgements
+
+This app uses Google's **Gemma 3 1B Instruct** model for local AI processing. The model is licensed under the Gemma Terms of Use and runs entirely on your device.
+
+For more information about the Gemma model, visit: https://ai.google.dev/gemma
+
 ---
 
 _Your privacy is guaranteed by design. All conversations remain truly private._
