@@ -14,8 +14,11 @@ struct MaybeMarkdown: View {
         self.txt = txt
     }
     var body: some View {
-        if let md = try? AttributedString(markdown: txt) {
-            Text(md)
+        if let attributedString = try? AttributedString(
+            markdown: txt,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        ) {
+            Text(attributedString)
         } else {
             Text(txt)
         }
@@ -23,5 +26,9 @@ struct MaybeMarkdown: View {
 }
 
 #Preview {
-    MaybeMarkdown("~Hey~ _there_, **world!**")
+    MaybeMarkdown("""
+~Hey~
+_there_,
+**world!**
+""")
 }
