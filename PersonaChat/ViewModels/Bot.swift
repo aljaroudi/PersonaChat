@@ -20,8 +20,9 @@ final class Bot {
 
     private let bot: LLM
     private let context: ModelContext
+    private let hapticCallback: (() -> Void)?
 
-    init(context: ModelContext) throws(BotError) {
+    init(context: ModelContext, hapticCallback: (() -> Void)? = nil) throws(BotError) {
         guard let url = Bundle.main.url(forResource: "gemma-3-1b-it-UD-Q3_K_XL", withExtension: "gguf")
         else { throw .notFound }
 
@@ -36,6 +37,7 @@ final class Bot {
 
         self.bot = bot
         self.context = context
+        self.hapticCallback = hapticCallback
     }
 
     func set(persona: Persona) {
@@ -65,6 +67,7 @@ final class Bot {
         }
 
         var sawAnyChunk = false
+        var chunkCount = 0
 
         // Stream response
         await bot.respond(to: prompt) { [self] stream in
@@ -72,6 +75,12 @@ final class Bot {
                 sawAnyChunk = true
                 response.text += chunk
                 try? context.save()
+                
+                // Add haptic feedback every few chunks to avoid overwhelming the user
+                chunkCount += 1
+                if chunkCount % 3 == 0 {
+                    hapticCallback?()
+                }
             }
             return response.text
         }
