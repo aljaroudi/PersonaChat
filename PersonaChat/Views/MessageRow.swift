@@ -26,9 +26,14 @@ struct MessageRow: View {
             }
             .padding()
         } else {
-            Text(message.text)
-                .padding(.horizontal)
-                .lineHeight(.loose)
+            if #available(iOS 26.0, *) {
+                Text(message.text)
+                    .padding(.horizontal)
+                    .lineHeight(.loose)
+            } else {
+                Text(message.text)
+                    .padding(.horizontal)
+            }
         }
     }
 }
