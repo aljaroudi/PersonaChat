@@ -50,7 +50,7 @@ struct ChatView: View {
     @State
     private var hapticTrigger: Int = 0
 
-    /// Text to speach mode
+    /// Text to speech mode
     @State
     private var tts = true
 
