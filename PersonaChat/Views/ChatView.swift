@@ -197,18 +197,6 @@ struct ChatView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-#if os(macOS)
-        ToolbarItem {
-            Picker("Persona", selection: $selectedPersonaID) {
-                ForEach(PERSONAS, id: \.id) { persona in
-                    Text("\(persona.emoji)  \(persona.name)")
-                        .font(persona.font)
-                        .tag(persona.id)
-                }
-            }
-            .pickerStyle(.menu)
-        }
-#endif
         ToolbarItem(placement: .topBarLeading) {
             Button(
                 "Speaker on",
