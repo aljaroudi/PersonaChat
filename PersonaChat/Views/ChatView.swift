@@ -25,7 +25,7 @@ struct ChatView: View {
 
     @AppStorage("selectedPersonaID")
     private var selectedPersonaID = PERSONAS.first?.id ?? "luna"
-    
+
     @AppStorage("onboardingVersion")
     private var onboardingVersion: String?
 
@@ -46,9 +46,18 @@ struct ChatView: View {
 
     @State
     private var scrollTrigger: Int = 0
-    
+
     @State
     private var hapticTrigger: Int = 0
+
+    /// Text to speach mode
+    @State
+    private var tts = true
+
+    @State
+    private var isTranscribing = false
+
+    private let transcribe = SpeechRecognizer()
 
     var body: some View {
         mainContent
@@ -67,14 +76,14 @@ struct ChatView: View {
             }
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
-    
+
     private var mainContent: some View {
         ZStack {
             chatScrollView
             inputArea
         }
     }
-    
+
     private var chatScrollView: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -106,14 +115,14 @@ struct ChatView: View {
             }
         }
     }
-    
+
     private var inputArea: some View {
         VStack {
             Spacer()
             inputField
         }
     }
-    
+
     private var inputField: some View {
         HStack {
             TextField("Type a message...", text: $text)
@@ -127,6 +136,21 @@ struct ChatView: View {
                 Button("Stop", systemImage: "square.fill") {
                     bot?.stop()
                 }.labelStyle(.iconOnly)
+            } else {
+                Button(
+                    isTranscribing
+                    ? "Stop"
+                    : "Record",
+                    systemImage: isTranscribing ? "square.fill" : "mic"
+                ) {
+                    transcribe.start { txt in
+                        text = txt
+                    } onFinish: {
+                        isTranscribing = false
+                    }
+                    isTranscribing = true
+                }
+                .labelStyle(.iconOnly)
             }
         }
         .padding()
@@ -135,7 +159,7 @@ struct ChatView: View {
         .padding()
         .background(textFieldHeightReader)
     }
-    
+
     private var textFieldHeightReader: some View {
         GeometryReader { geometry in
             Color.clear
@@ -149,7 +173,7 @@ struct ChatView: View {
                 }
         }
     }
-    
+
     private var backgroundView: some View {
         ZStack {
             Image(selectedPersona.backgroundImage)
@@ -161,7 +185,7 @@ struct ChatView: View {
                 .ignoresSafeArea()
         }
     }
-    
+
     private var personaPicker: some View {
         Picker("Persona", selection: $selectedPersonaID) {
             ForEach(PERSONAS, id: \.id) { persona in
@@ -170,7 +194,7 @@ struct ChatView: View {
             }
         }
     }
-    
+
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
 #if os(macOS)
@@ -185,11 +209,18 @@ struct ChatView: View {
             .pickerStyle(.menu)
         }
 #endif
+        ToolbarItem(placement: .topBarLeading) {
+            Button(
+                "Speaker on",
+                systemImage: tts ? "speaker.wave.2" : "speaker",
+                action: { tts.toggle() }
+            )
+        }
         ToolbarItem {
             Button("Clear Chat", systemImage: "square.and.pencil", action: clearChat)
         }
     }
-    
+
     @MainActor
     private func handleTask(proxy: ScrollViewProxy) async {
         // lazy init once we have a ModelContext in scope
@@ -205,7 +236,7 @@ struct ChatView: View {
             scrollToBottom(proxy: proxy)
         }
     }
-    
+
     private func handleTextFieldFocus(_ isFocused: Bool) {
         guard isFocused else { return }
         // Scroll to bottom when text field is focused
@@ -213,23 +244,23 @@ struct ChatView: View {
             scrollTrigger += 1
         }
     }
-    
+
     @MainActor
     private func showOnboardingWithTyping() async {
         let onboardingMessage = Message(role: .bot, text: "")
         modelContext.insert(onboardingMessage)
         try? modelContext.save()
-        
+
         // Simulate typing effect
         let fullText = Message.onboarding
 
         for i in 0...fullText.count {
             onboardingMessage.text = String(fullText.prefix(i))
             try? modelContext.save()
-            
+
             scrollTrigger += 1
             hapticTrigger += 1
-            
+
             // Vary typing speed for more realistic effect
             let delay = fullText[fullText.index(fullText.startIndex, offsetBy: min(i, fullText.count - 1))] == " " ? 0.05 : 0.03
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
@@ -276,6 +307,7 @@ struct ChatView: View {
                     response.text += ".. Oops, something went wrong!"
                     try? self.modelContext.save()
                 }
+                response.text.speak()
             }
         }
 
